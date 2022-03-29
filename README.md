@@ -60,6 +60,9 @@ total 48
   - indices_stats.json
   - cat/cat_aliases.txt
 
+## Usage:
+run the script in the same directory as `indices_stats.json` with `cat_aliases.txt` in `cat` directory.
+
 # Next steps:
 - Add a command in output that will provide the DELETEs for #4 and #5.  Not sure if I will provide this #1,#2,#3 to force the user to make the decision.
 - split into separate DELETEs every ~4000 characters
