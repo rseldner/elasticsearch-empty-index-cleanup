@@ -54,6 +54,7 @@ total 48
 ```
 
 ## Requirements:
+- macOS or linux
 - [jq](https://stedolan.github.io/jq/download/)
 - An elasticsearch support diagnostic or these files:
   - indices_stats.json
