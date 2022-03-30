@@ -1,5 +1,5 @@
 # empty-index-cleanup
- tool to help identify empty indices that can be removed; particularly those that have resulted from max_age ILM rollovers.
+ tool to help identify empty indices that can be removed; particularly those that have resulted from [max_age ILM rollovers](https://www.elastic.co/guide/en/elasticsearch/reference/current/size-your-shards.html#delete-empty-indices).
  The tool will break down the different types of empty indices, and will provide a separate output for each subset.
 
 Currently creates serparate outputs for:
