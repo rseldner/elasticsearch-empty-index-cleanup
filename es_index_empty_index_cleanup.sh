@@ -122,6 +122,7 @@ echo "$count_3 Empty ILM rollover indices" >>$summary
 echo "🟡 Notes: ❕Caution - This includes current write indices, which can result in annoying errors when removed" >>$summary
 echo "File (list): $all_empty_ilm" >>$summary
 echo "Terminal Command to generate a DELETE file (copy/paste to run):" >>$summary
+echo >>$summary
 echo "echo DELETE \$(cat $all_empty_ilm| paste -s -d, -) > $all_empty_ilm-DELETE.txt" >>$summary
 echo >>$summary
 echo "-----------------------------#4---------------------------------" >>$summary
@@ -130,6 +131,7 @@ echo "$count_4 Empty non-system ILM rollover indices" >>$summary
 echo "🟡 Notes: Caution - This includes the current write indices. Probably not recommended ">>$summary
 echo "File (list): $all_empty_ilm_non_sys" >>$summary
 echo "Terminal Command to generate a DELETE file (copy/paste to run):" >>$summary
+echo >>$summary
 echo "echo DELETE \$(cat $all_empty_ilm_non_sys| paste -s -d, -) > $all_empty_ilm_non_sys-DELETE.txt" >>$summary
 echo >>$summary
 echo "-----------------------------#5---------------------------------" >>$summary
