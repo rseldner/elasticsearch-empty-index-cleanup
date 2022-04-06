@@ -66,6 +66,7 @@ echo DELETE $(cat es_index_cleanup/2-es_index_cleanup_all_empty_user.txt| paste 
 🟡 Notes: ❕Caution - This includes current write indices, which can result in annoying errors when removed
 File (list): es_index_cleanup/3-es_index_cleanup_all_empty_ilm.txt
 Terminal Command to generate a DELETE file (copy/paste to run):
+
 echo DELETE $(cat es_index_cleanup/3-es_index_cleanup_all_empty_ilm.txt| paste -s -d, -) > es_index_cleanup/3-es_index_cleanup_all_empty_ilm.txt-DELETE.txt
 
 -----------------------------#4---------------------------------
@@ -74,6 +75,7 @@ echo DELETE $(cat es_index_cleanup/3-es_index_cleanup_all_empty_ilm.txt| paste -
 🟡 Notes: Caution - This includes the current write indices. Probably not recommended 
 File (list): es_index_cleanup/4-es_index_cleanup_all_empty_ilm_non_sys.txt
 Terminal Command to generate a DELETE file (copy/paste to run):
+
 echo DELETE $(cat es_index_cleanup/4-es_index_cleanup_all_empty_ilm_non_sys.txt| paste -s -d, -) > es_index_cleanup/4-es_index_cleanup_all_empty_ilm_non_sys.txt-DELETE.txt
 
 -----------------------------#5---------------------------------
