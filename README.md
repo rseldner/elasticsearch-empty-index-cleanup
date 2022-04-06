@@ -1,6 +1,6 @@
 # empty-index-cleanup
  tool to help identify empty indices that can be removed; particularly those that have resulted from [max_age ILM rollovers](https://www.elastic.co/guide/en/elasticsearch/reference/current/size-your-shards.html#delete-empty-indices).
- The tool will break down the different types of empty indices, and will provide a separate output for each subset.
+ The tool will organize the empty indices into groups, and will provide a separate output for each subset.
 
 Currently creates serparate outputs for:
 1. ALL Empty Indices
@@ -11,7 +11,7 @@ Currently creates serparate outputs for:
 6. Empty ILM rollover non-system/hidden and not current write indices
 
 As a safety precaution, a DELETE will be automatically created for **only** 5 and 6.  
-Though a command to generate DELETEs for 1-4 are provided in the summary file if you wish to run that separately.
+Though a command to generate DELETEs for 1-4 IS provided in the summary file if you wish to run that separately. 
 
 ### Example Terminal output:
 ```
@@ -132,14 +132,15 @@ DELETE apm-7.15.2-profile-000001,apm-7.15.2-profile-000002,apm-7.15.2-profile-00
 - macOS or linux
 - [jq](https://stedolan.github.io/jq/download/)
 - An elasticsearch support diagnostic or these files:
-  - indices_stats.json
-  - cat/cat_aliases.txt
+  - indices_stats.json (`GET */_stats`)
+  - cat/cat_aliases.txt (`GET _cat/aliases?v`)
 
 ## Usage:
 run the script in the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory)
 
 # Next steps:
 - split into separate DELETEs every ~4000 characters (<4KB)
+- validate ILM managed indices by checking actual ILM outputs rather than assuming based on an index name's numerical suffix
 - switch to checking alias.json for write indices instead of _cat/aliases as cat APIs are not recommended for programatic parsing.  Potential of breaking in the future.
 - generate a list of ILM policies that may need to have `max_age` removed/adjusted and a DELETE phase added
 - suggest an index cleanup API? 🤔
