@@ -139,6 +139,7 @@ DELETE apm-7.15.2-profile-000001,apm-7.15.2-profile-000002,apm-7.15.2-profile-00
 run the script in the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory)
 
 # Next steps:
+- produce a shard count for each grouping
 - split into separate DELETEs every ~4000 characters (<4KB)
 - validate ILM managed indices by checking actual ILM outputs rather than assuming based on an index name's numerical suffix
 - switch to checking alias.json for write indices instead of _cat/aliases as cat APIs are not recommended for programatic parsing.  Potential of breaking in the future.
