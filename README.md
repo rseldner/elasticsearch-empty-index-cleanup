@@ -127,22 +127,63 @@ apm-7.16.1-profile-000001
 DELETE apm-7.15.2-profile-000001,apm-7.15.2-profile-000002,apm-7.15.2-profile-000003,apm-7.16.1-error-000003,apm-7.16.1-profile-000001,apm-7.16.1-...
 ```
 
+### Currently testing getting a shard count for these indices as well as their ILM policies
+
+<details>
+<summary> **Example Outputs**</summary>
+	
+```
+######### 💰 Total Shards Savings (cluster wide) 💰 #########
+
+1 - Shard count Method 1 (total_count in indices_stats.json) - might take several seconds.  This will count total assigned shards.
+124
+
+#########
+
+2 - Shard count Method 2 (looks at P & R columns cat_indices) - This will count total configured shards; so unassigned shards will be included in the count
+124
+
+#########
+
+3 - Used shard count Method 3 (count of index name in shards.json - 1 instance = 1 shard). This will count total configured shards; so unassigned shards will be included in the count
+124
+
+
+###########################################################
+Consider adjusting the rollover max_age or Delete phase min_age in the following ILM Policies
+
+apm-rollover-30-days (31 empty rollover indices)
+	 Rollover max_age: 	 30d
+	 Delete min_age: 	 30d
+
+
+kibana-event-log-policy (26 empty rollover indices)
+	 Rollover max_age: 	 30d
+	 Delete min_age: 	 90d
+
+
+metricbeat (7 empty rollover indices)
+	 Rollover max_age: 	 1d
+	 Delete min_age: 	 7d
+```
+	
+</details>
 
 ## Requirements:
 - macOS or linux
 - [jq](https://stedolan.github.io/jq/download/)
 - An elasticsearch support diagnostic or these files:
-  - indices_stats.json (`GET */_stats`)
+  - indices_stats.json (`GET */_stats?level=shards&pretty&human&expand_wildcards=all`)
   - cat/cat_aliases.txt (`GET _cat/aliases?v`)
 
 ## Usage:
 run the script in the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory)
 
 # Next steps:
-- produce a shard count for each grouping
-- split into separate DELETEs every ~4000 characters (<4KB)
-- validate ILM managed indices by checking actual ILM outputs rather than assuming based on an index name's numerical suffix
-- switch to checking alias.json for write indices instead of _cat/aliases as cat APIs are not recommended for programatic parsing.  Potential of breaking in the future.
-- generate a list of ILM policies that may need to have `max_age` removed/adjusted and a DELETE phase added
-- suggest an index cleanup API? 🤔
-
+- [ ] produce a shard count for each grouping
+  - came up with 3 count methods.  need to decide where to put that info
+- [ ] split into separate DELETEs every ~4000 characters (<4KB)
+- [ ] validate ILM managed indices by checking actual ILM outputs rather than assuming based on an index name's numerical suffix.  though this might not be important.
+- [ ] switch to checking alias.json for write indices instead of _cat/aliases as cat APIs are not recommended for programatic parsing.  Potential of breaking in the future.
+- [X] generate a list of ILM policies that may need to have `max_age` removed/adjusted and a DELETE phase added
+- [ ] Clean it all up
