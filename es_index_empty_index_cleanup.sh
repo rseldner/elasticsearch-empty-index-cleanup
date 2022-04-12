@@ -5,12 +5,16 @@
 #These empty indices provide no benefit but still consume resources.
 
 # Current version
+# v1.4.1 20220412
+# added shard counter and ilm polcy test scripts.  shard counter is hard coded to one file at the moment.
+
+# previous versions
+
 # v1.3.1 20220406
 # added check to exit if the source files don't exist or contain an error.
 # added commands for each type that will generate a file containing a DELETE for the respective indices
 # call shard counter (test)
 
-# previous versions
 # v1.3.0 20220328
 # changed output filenemes to include numerical prefix for easier reference/identification
 # updated descriptions in summary
