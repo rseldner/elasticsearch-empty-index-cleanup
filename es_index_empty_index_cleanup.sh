@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #Exmaple Use Case: https://www.elastic.co/guide/en/elasticsearch/reference/current/size-your-shards.html#delete-empty-indices
 #If you’re using ILM and roll over indices based on a max_age threshold, you can inadvertently create indices with no documents.
@@ -142,7 +142,7 @@ echo "🟢 Notes: Subset of #3.  Safer but note that it includes system/hidden i
 echo "File (list): $all_empty_ilm_non_write" >>$summary
 echo  >>$summary
 echo File containing DELETE was automatically created by script: >>$summary
-echo '\t'less $all_empty_ilm_non_write-DELETE.txt >>$summary
+echo -e '\t'less $all_empty_ilm_non_write-DELETE.txt >>$summary
 echo >>$summary
 echo "-----------------------------#6---------------------------------" >>$summary
 echo >>$summary
@@ -151,7 +151,7 @@ echo "🟢 Notes: Subset of #4. Safest to remove" >>$summary
 echo "File (list): $all_empty_ilm_non_sys_non_write" >>$summary
 echo  >>$summary
 echo File containing DELETE was automatically created by script: >>$summary
-echo '\t'less $all_empty_ilm_non_sys_non_write-DELETE.txt >>$summary
+echo -e '\t'less $all_empty_ilm_non_sys_non_write-DELETE.txt >>$summary
 echo >>$summary
 echo "################ Index Cleanup Summary [END] ################" >>$summary
 echo>>$summary
@@ -164,7 +164,7 @@ grep --color=always -E '^\d+' $summary
 echo
 echo See $summary and output files in $folder path for details
 echo
-echo '\t' less $summary
+echo -e '\t' less $summary
 echo
 echo "################ Index Cleanup Summary [END] ################"
 echo

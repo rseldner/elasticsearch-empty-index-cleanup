@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #### THIS IS A TEST.  Not sure where to put this yet, but it's worth knowing for each group. Should probably be its own script.
 # Only capturing shard count from one group at the moment
@@ -27,17 +27,18 @@ then
   exit 1
 fi
 
-#### THIS IS A TEST.  Not sure where to put this yet, but it's worth knowing for each group. Should probably be its own script.
-# Only capturing shard count from one group at the moment
-echo
-echo
-echo "####### 💰 Total Shards Savings (cluster wide) 💰 #######"
-
 #cleanup temp file in case previous runs were aborted
 if [ -f shard_count.temp ]
   then
   rm shard_count.temp
 fi
+
+#### THIS IS A TEST.  Not sure where to put this yet, but it's worth knowing for each group. Should probably be its own script.
+# Only capturing shard count from one group at the moment
+echo
+echo
+echo "######### 💰 Total Shards Savings (cluster wide) 💰 #########"
+echo
 
 #if grep -q "shard_stats" $index_stats
 #then
@@ -45,8 +46,7 @@ fi
   #use jq to loop through index list and query indices_stats.json for total.shard_stats.total_count
 
   #jq '[.indices."my-index".total.shard_stats.total_count]' indices_stats.json|tr -d '[] \n'
-  echo "Shard count Method 1 (indices_stats) - might take several seconds"
-  echo "This will accurately count total assigned shards"
+  echo "1 - Shard count Method 1 (total_count in indices_stats.json) - might take several seconds.  This will count total assigned shards."
   #filename=$all_empty_ilm_non_sys_non_write
   filename=$all_empty_ilm_non_write
   file_indices=$(cat $filename)
@@ -58,14 +58,15 @@ fi
   awk '{s+=$1} END {print s}' shard_count.temp
   #clean up temp file
   rm shard_count.temp
+  echo
 #else
 
   #shard counter Method 2
   #includes unassigned shards in its count.  Inaccurate if 1 node w/ replicas. Though unassigned replicas do count towards max shards.
   #loop through index list and grep/awk cat_indices.txt for the primary and replica counts, and calculate the resulting shards.
-  echo "Shard count Method 2 (cat_indices)"
-  echo "This will count total configured shards; so unassigned shards will be included in the count"
-
+echo "#########"
+echo
+  echo "2 - Shard count Method 2 (looks at P & R columns cat_indices) - This will count total configured shards; so unassigned shards will be included in the count"
   #filename=$all_empty_ilm_non_sys_non_write
   filename=$all_empty_ilm_non_write
   file_indices=$(cat $filename)
@@ -76,46 +77,57 @@ fi
   awk '{a=$1} {b=$2} {print a+(a*b)}' shard_count.temp|awk '{s+=$1} END {print s}'
   #clean up temp file
   rm shard_count.temp
+  echo
 
 #else
 #shard counter Method 3
 #loop through index list and count the occurance of each index in shards.json
 #probably accurate. results match the two methds above.
-
-echo "Used shard count Method 3 (shards.json)"
-echo "This will also count total configured shards; so unassigned shards will be included in the count"
+echo "#########"
+echo
+  echo "3 - Used shard count Method 3 (count of index name in shards.json - 1 instance = 1 shard). This will count total configured shards; so unassigned shards will be included in the count"
 #filename=$all_empty_ilm_non_sys_non_write
-filename=$all_empty_ilm_non_write
-file_indices=$(cat $filename)
-for index_name in $file_indices
+ filename=$all_empty_ilm_non_write
+ file_indices=$(cat $filename)
+ for index_name in $file_indices
   do
-  grep $index_name shards.json | wc -l >>shard_count.temp
-done
-  awk '{s+=$1} END {print s}' shard_count.temp
+   grep $index_name shards.json | wc -l >>shard_count.temp
+  done
+ awk '{s+=$1} END {print s}' shard_count.temp
 #clean up temp file
-rm shard_count.temp
+ rm shard_count.temp
+ echo
 
 #fi
 echo
-
+echo "###########################################################"
 # GET ILM POLICIES
+
+if [ -f ilm_pol1.temp ]
+  then
+  rm ilm_pol*.temp
+fi
 
 file_indices=$(cat $filename)
 for index_name in $file_indices
   do
-jq "[.indices.\"$index_name\".policy]" commercial/ilm_explain.json |tr -d '[] "' >> ilm_pol1.temp
+jq "[.indices.\"$index_name\".policy]" commercial/ilm_explain.json |tr -d '[] "'|sed 's/null//g' >> ilm_pol1.temp
 done
-echo "Consider adjusting max_age and DELETE phase in the following ILM Policies"
-cat ilm_pol.temp| sed '/^$/d'|sort -u > ilm_pol2.temp
-rm ilm_pol1.temp
+echo "Consider adjusting the rollover max_age or Delete phase min_age in the following ILM Policies"
+cat ilm_pol1.temp| sed '/^$/d'|sort -u > ilm_pol2.temp
+
 
 # GET ILM POLICIES' rollover max_age and delete phase min_age
 filename=ilm_pol2.temp
 ilm_policies=$(cat $filename)
 for pol_name in $ilm_policies
   do
-echo $pol_name
-echo "max_age \t min_age"
-jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age,.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "'
+echo
+echo -e $pol_name \($(grep -c $pol_name ilm_pol1.temp) empty rollover indices found\)
+#$(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age,.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
+echo -e '\t' Rollover max_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
+echo -e '\t' Delete min_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
+echo
 done
-rm ilm_pol2.temp
+
+echo "###########################################################"
