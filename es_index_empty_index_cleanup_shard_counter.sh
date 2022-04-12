@@ -37,7 +37,7 @@ fi
 # Only capturing shard count from one group at the moment
 echo
 echo
-echo "######### 💰 Total Shards Savings (cluster wide) 💰 #########"
+echo "##### 💰 Total Shards Savings (cluster wide) [START] 💰 #####"
 echo
 
 #if grep -q "shard_stats" $index_stats
@@ -46,7 +46,7 @@ echo
   #use jq to loop through index list and query indices_stats.json for total.shard_stats.total_count
 
   #jq '[.indices."my-index".total.shard_stats.total_count]' indices_stats.json|tr -d '[] \n'
-  echo "1 - Shard count Method 1 (total_count in indices_stats.json) - might take several seconds.  This will count total assigned shards."
+  echo "1 - Shard count Method 1 (total_count in indices_stats.json) - might take several seconds.  This will count total assigned shards. Unfortunately, this might be empty depending on the diag and cluster version"
   #filename=$all_empty_ilm_non_sys_non_write
   filename=$all_empty_ilm_non_write
   file_indices=$(cat $filename)
@@ -100,34 +100,6 @@ echo
 
 #fi
 echo
-echo "###########################################################"
-# GET ILM POLICIES
 
-if [ -f ilm_pol1.temp ]
-  then
-  rm ilm_pol*.temp
-fi
-
-file_indices=$(cat $filename)
-for index_name in $file_indices
-  do
-jq "[.indices.\"$index_name\".policy]" commercial/ilm_explain.json |tr -d '[] "'|sed 's/null//g' >> ilm_pol1.temp
-done
-echo "Consider adjusting the rollover max_age or Delete phase min_age in the following ILM Policies"
-cat ilm_pol1.temp| sed '/^$/d'|sort -u > ilm_pol2.temp
-
-
-# GET ILM POLICIES' rollover max_age and delete phase min_age
-filename=ilm_pol2.temp
-ilm_policies=$(cat $filename)
-for pol_name in $ilm_policies
-  do
+echo "###### 💰 Total Shards Savings (cluster wide) [END] 💰 ######"
 echo
-echo -e $pol_name \($(grep -c $pol_name ilm_pol1.temp) empty rollover indices found\)
-#$(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age,.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
-echo -e '\t' Rollover max_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
-echo -e '\t' Delete min_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
-echo
-done
-
-echo "###########################################################"

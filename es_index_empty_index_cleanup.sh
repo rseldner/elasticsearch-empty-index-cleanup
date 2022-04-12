@@ -172,4 +172,5 @@ echo
 me=$(realpath $0)
 my_path=$(dirname $me)
 $my_path/es_index_empty_index_cleanup_shard_counter.sh
+echo
 $my_path/es_index_empty_index_cleanup_ILM_policies.sh
