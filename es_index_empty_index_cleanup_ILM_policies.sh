@@ -17,6 +17,7 @@ filename=$all_empty_ilm
 
 echo
 echo "################# ILM POLICY REVIEW [START] #################"
+echo
 # GET ILM POLICIES
 #cleanup temp file in case previous runs were aborted
 if [ -f ilm_pol1.temp ]
