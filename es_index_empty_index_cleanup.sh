@@ -8,6 +8,7 @@
 # v1.3.1 20220406
 # added check to exit if the source files don't exist or contain an error.
 # added commands for each type that will generate a file containing a DELETE for the respective indices
+# call shard counter (test)
 
 # previous versions
 # v1.3.0 20220328
@@ -166,3 +167,8 @@ echo
 echo '\t' less $summary
 echo
 echo "################ Index Cleanup Summary [END] ################"
+echo
+
+me=$(realpath $0)
+my_path=$(dirname $me)
+$my_path/es_index_empty_index_cleanup_shard_counter.sh
