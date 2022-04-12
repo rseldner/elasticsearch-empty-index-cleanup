@@ -181,13 +181,13 @@ apm-rollover-30-days
   - cat/cat_aliases.txt (`GET _cat/aliases?v`)
 
 ## Usage:
-run the script in the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory)
+run the `es_index_empty_index_cleanup.sh` script in the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory)
 
 # Next steps:
 - [ ] produce a shard count for each grouping
   - came up with 3 count methods.  need to decide where to put that info
 - [ ] split into separate DELETEs every ~4000 characters (<4KB)
-- [ ] validate ILM managed indices by checking actual ILM outputs rather than assuming based on an index name's numerical suffix.  though this might not be important.
-- [ ] switch to checking alias.json for write indices instead of _cat/aliases as cat APIs are not recommended for programatic parsing.  Potential of breaking in the future.
+- [ ] validate ILM managed indices by checking actual ILM outputs rather than assuming based on an index name's numerical suffix.  though this might not be important.  Does it matter if an *empty* index is misinterpreted as being ILM managed?
+- [ ] switch to checking alias.json for write indices instead of _cat/aliases as cat APIs are not recommended for programatic parsing.  risk of breaking in the future.
 - [X] generate a list of ILM policies that may need to have `max_age` removed/adjusted and a DELETE phase added
 - [ ] Clean it all up
