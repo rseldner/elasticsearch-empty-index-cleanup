@@ -127,44 +127,48 @@ apm-7.16.1-profile-000001
 DELETE apm-7.15.2-profile-000001,apm-7.15.2-profile-000002,apm-7.15.2-profile-000003,apm-7.16.1-error-000003,apm-7.16.1-profile-000001,apm-7.16.1-...
 ```
 
-### Currently testing getting a shard count for these indices as well as their ILM policies
+## Currently testing getting a shard count for these indices as well as their ILM policies
 
 <details>
 <summary> **Example Outputs**</summary>
 	
 ```
-######### 💰 Total Shards Savings (cluster wide) 💰 #########
+##### 💰 Total Shards Savings (cluster wide) [START] 💰 #####
 
-1 - Shard count Method 1 (total_count in indices_stats.json) - might take several seconds.  This will count total assigned shards.
-124
+1 - Shard count Method 1 (total_count in indices_stats.json) - might take several seconds.  This will count total assigned shards. Unfortunately, this might be empty depending on the diag and cluster version
+100
 
 #########
 
-2 - Shard count Method 2 (looks at P & R columns cat_indices) - This will count total configured shards; so unassigned shards will be included in the count
-124
+2 - Shard count Method 2 (calculation of P & R columns cat_indices) - This will count total configured shards; so unassigned shards will be included in the count
+100
 
 #########
 
 3 - Used shard count Method 3 (count of index name in shards.json - 1 instance = 1 shard). This will count total configured shards; so unassigned shards will be included in the count
-124
+100
 
 
-###########################################################
+###### 💰 Total Shards Savings (cluster wide) [END] 💰 ######
+
+
+
+################# ILM POLICY REVIEW [START] #################
+
 Consider adjusting the rollover max_age or Delete phase min_age in the following ILM Policies
 
-apm-rollover-30-days (31 empty rollover indices)
+.siem-signals-default
+(1 empty rollover indices found)
 	 Rollover max_age: 	 30d
-	 Delete min_age: 	 30d
+	 Delete min_age: 	
 
 
-kibana-event-log-policy (26 empty rollover indices)
+apm-rollover-30-days
+(110 empty rollover indices found)
 	 Rollover max_age: 	 30d
-	 Delete min_age: 	 90d
+	 Delete min_age: 	
 
-
-metricbeat (7 empty rollover indices)
-	 Rollover max_age: 	 1d
-	 Delete min_age: 	 7d
+################# ILM POLICY REVIEW [END] #################
 ```
 	
 </details>
