@@ -97,3 +97,25 @@ rm shard_count.temp
 
 #fi
 echo
+
+# GET ILM POLICIES
+
+file_indices=$(cat $filename)
+for index_name in $file_indices
+  do
+jq "[.indices.\"$index_name\".policy]" commercial/ilm_explain.json |tr -d '[] "' >> ilm_pol1.temp
+done
+echo "Consider adjusting max_age and DELETE phase in the following ILM Policies"
+cat ilm_pol.temp| sed '/^$/d'|sort -u > ilm_pol2.temp
+rm ilm_pol1.temp
+
+# GET ILM POLICIES' rollover max_age and delete phase min_age
+filename=ilm_pol2.temp
+ilm_policies=$(cat $filename)
+for pol_name in $ilm_policies
+  do
+echo $pol_name
+echo "max_age \t min_age"
+jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age,.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "'
+done
+rm ilm_pol2.temp
