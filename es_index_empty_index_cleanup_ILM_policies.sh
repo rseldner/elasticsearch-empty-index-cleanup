@@ -12,6 +12,9 @@ all_empty_ilm_non_sys="$folder/4-es_index_cleanup_all_empty_ilm_non_sys.txt"
 all_empty_ilm_non_write="$folder/5-es_index_cleanup_all_empty_ilm_non_write.txt"
 all_empty_ilm_non_sys_non_write="$folder/6-es_index_cleanup_all_empty_ilm_non_sys_non_write.txt"
 summary="$folder/0-es_index_cleanup_summary.txt"
+#can probably hard code "commercial" dir instead of using find
+ilm_explain_json=$(find . -name "ilm_explain.json")
+ilm_policies_json=$(find . -name "ilm_policies.json")
 
 filename=$all_empty_ilm
 
@@ -29,7 +32,7 @@ fi
 file_indices=$(cat $filename)
 for index_name in $file_indices
   do
-jq "[.indices.\"$index_name\".policy]" commercial/ilm_explain.json |tr -d '[] "'|sed 's/null//g' >> ilm_pol1.temp
+jq "[.indices.\"$index_name\".policy]" $ilm_explain_json |tr -d '[] "'|sed 's/null//g' >> ilm_pol1.temp
 done
 
 #remove duplicates
@@ -46,8 +49,8 @@ echo
 echo $pol_name
 echo -e \($(grep -c $pol_name ilm_pol1.temp) empty rollover indices found\)
 #$(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age,.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
-echo -e '\t' Rollover max_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
-echo -e '\t' Delete min_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
+echo -e '\t' Rollover max_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age]| @tsv" $ilm_policies_json |tr -d '[] "')
+echo -e '\t' Delete min_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.delete.min_age]| @tsv" $ilm_policies_json |tr -d '[] "')
 echo
 done
 
