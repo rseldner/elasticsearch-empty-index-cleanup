@@ -46,7 +46,11 @@ echo
   #use jq to loop through index list and query indices_stats.json for total.shard_stats.total_count
 
   #jq '[.indices."my-index".total.shard_stats.total_count]' indices_stats.json|tr -d '[] \n'
-  echo "1 - Shard count Method 1 (total_count in indices_stats.json) - might take several seconds.  This will count total assigned shards. Unfortunately, this might be empty depending on the diag and cluster version"
+  echo "1 - Shard count Method 1 (total_count in indices_stats.json) - might take several seconds.  This will count total assigned shards. Unfortunately, this is not included in some cluster/diag versions, so it might be skipped"
+if grep -q "shard_stats" indices_stats.json && grep -q "total_count" indices_stats.json
+then
+
+
   #filename=$all_empty_ilm_non_sys_non_write
   filename=$all_empty_ilm_non_write
   file_indices=$(cat $filename)
@@ -58,6 +62,7 @@ echo
   awk '{s+=$1} END {print s}' shard_count.temp
   #clean up temp file
   rm shard_count.temp
+fi
   echo
 #else
 
