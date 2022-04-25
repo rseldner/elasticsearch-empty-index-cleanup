@@ -55,3 +55,28 @@ echo
 done
 
 echo "################# ILM POLICY REVIEW [END] #################"
+
+#testing sort
+filename=ilm_pol2.temp
+ilm_policies=$(cat $filename)
+for pol_name in $ilm_policies
+  do
+echo
+echo $pol_name
+echo $pol_name $(grep -c $pol_name ilm_pol1.temp) >>ilm_pol3.temp
+echo
+done
+cat ilm_pol3.temp|sort -k2 -n -r >>ilm_pol4.temp
+
+filename=ilm_pol4.temp
+ilm_policies=$(cut -f1 -d ' ' $filename)
+for pol_name in $($ilm_policies)
+  do
+echo
+echo $pol_name
+echo $(cut -f2 -d ' ' $ilm_policies) empty rollover indices found\)
+#$(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age,.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
+echo -e '\t' Rollover max_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age]| @tsv" $ilm_policies_json |tr -d '[] "')
+echo -e '\t' Delete min_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.delete.min_age]| @tsv" $ilm_policies_json |tr -d '[] "')
+echo
+done
