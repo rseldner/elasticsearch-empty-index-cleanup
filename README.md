@@ -139,29 +139,43 @@ File containing DELETE was automatically created by script:
 ### Output Files in `es_index_cleanup` directory
 ```
 $ ls -l es_index_cleanup 
-total 64
--rw-r--r--  1 rseldner  staff  3284 Apr  6 11:33 0-es_index_cleanup_summary.txt
--rw-r--r--  1 rseldner  staff   970 Apr  6 11:33 1-es_index_cleanup_all_empty.txt
--rw-r--r--  1 rseldner  staff     0 Apr  6 11:33 2-es_index_cleanup_all_empty_user.txt
--rw-r--r--@ 1 rseldner  staff   914 Apr  6 11:33 3-es_index_cleanup_all_empty_ilm.txt
--rw-r--r--@ 1 rseldner  staff   440 Apr  6 11:33 4-es_index_cleanup_all_empty_ilm_non_sys.txt
--rw-r--r--@ 1 rseldner  staff   477 Apr  6 11:33 5-es_index_cleanup_all_empty_ilm_non_write.txt
--rw-r--r--@ 1 rseldner  staff   484 Apr  6 11:33 5-es_index_cleanup_all_empty_ilm_non_write.txt-DELETE.txt
--rw-r--r--  1 rseldner  staff   285 Apr  6 11:33 6-es_index_cleanup_all_empty_ilm_non_sys_non_write.txt
--rw-r--r--@ 1 rseldner  staff   292 Apr  6 11:33 6-es_index_cleanup_all_empty_ilm_non_sys_non_write.txt-DELETE.txt
+total 136
+drwxr-xr-x   18 rseldner  staff   576B Aug  4 00:16 .
+drwxr-xr-x@ 117 rseldner  staff   3.7K Aug  4 00:18 ..
+-rw-r--r--    1 rseldner  staff   4.5K Aug  4 00:16 0-es_index_cleanup_summary.txt
+-rw-r--r--    1 rseldner  staff   4.3K Aug  4 00:16 1-es_index_cleanup_all_empty.txt
+-rw-r--r--    1 rseldner  staff   4.3K Aug  1 19:37 1-es_index_cleanup_all_empty.txt-DELETE.txt
+-rw-r--r--    1 rseldner  staff   4.0K Aug  4 00:16 2-es_index_cleanup_all_empty_user.txt
+-rw-r--r--    1 rseldner  staff   3.7K Aug  4 00:16 3-es_index_cleanup_all_empty_ilm.txt
+-rw-r--r--    1 rseldner  staff   3.5K Aug  4 00:16 4-es_index_cleanup_all_empty_ilm_non_sys.txt
+-rw-r--r--    1 rseldner  staff   2.4K Aug  4 00:16 5-es_index_cleanup_all_empty_ilm_non_write.txt
+-rw-r--r--    1 rseldner  staff   2.4K Aug  4 00:16 5-es_index_cleanup_all_empty_ilm_non_write.txt-DELETE.txt
+-rw-r--r--    1 rseldner  staff   2.3K Aug  4 00:16 6-es_index_cleanup_all_empty_ilm_non_sys_non_write.txt
+-rw-r--r--    1 rseldner  staff   2.3K Aug  4 00:16 6-es_index_cleanup_all_empty_ilm_non_sys_non_write.txt-DELETE.txt
+-rw-r--r--    1 rseldner  staff     0B Aug  4 00:16 7-es_index_cleanup_all_empty_non_write_datastreams.txt
+-rw-r--r--    1 rseldner  staff     7B Aug  4 00:16 7-es_index_cleanup_all_empty_non_write_datastreams.txt-DELETE.txt
+-rw-r--r--    1 rseldner  staff   987B Aug  4 00:16 8-all_empty_frozen_searchable_snapshots.txt
+-rw-r--r--    1 rseldner  staff   994B Aug  4 00:16 8-all_empty_frozen_searchable_snapshots.txt-DELETE.txt
+-rw-r--r--    1 rseldner  staff     0B Aug  4 00:16 9-all_empty_cold_searchable_snapshots.txt
+-rw-r--r--    1 rseldner  staff     7B Aug  4 00:16 9-all_empty_cold_searchable_snapshots.txt-DELETE.txt
 ```
 ### Example list file output:
 ```
-apm-7.15.2-profile-000001
-apm-7.15.2-profile-000002
-apm-7.15.2-profile-000003
-apm-7.16.1-error-000003
-apm-7.16.1-profile-000001
+.kibana-event-log-7.16.0-000005
+.kibana-event-log-7.16.0-000006
+.kibana-event-log-7.16.0-000007
+.siem-signals-default-000001
+.siem-signals-default-000002
+apm-7.16.0-error-000001
+apm-7.16.0-error-000002
+apm-7.16.0-error-000003
+apm-7.16.0-error-000004
+apm-7.16.0-error-000005
 ...
 ```
 ### Example DELETE file output:
 ```
-DELETE apm-7.15.2-profile-000001,apm-7.15.2-profile-000002,apm-7.15.2-profile-000003,apm-7.16.1-error-000003,apm-7.16.1-profile-000001,apm-7.16.1-...
+DELETE .kibana-event-log-7.16.0-000005,.kibana-event-log-7.16.0-000006,.kibana-event-log-7.16.0-000007,.siem-signals-default-000001,....
 ```
 
 ## Currently testing getting a shard count for these indices as well as their ILM policies
