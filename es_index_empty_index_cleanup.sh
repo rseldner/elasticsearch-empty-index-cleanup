@@ -126,6 +126,15 @@ grep -E "^restored-.*" $all_empty > $all_empty_cold_searchable_snapshots
   #create a DELETE API request
 echo DELETE `grep -E "^restored-.*" $all_empty |sort| paste -s -d, -`>$all_empty_cold_searchable_snapshots-DELETE.txt
 
+#split into multiple DELETEs if > ~4kb
+for delete_txt in $folder/*DELETE.txt
+do
+  char_count=$(cat $delete_txt|wc -c)
+  if [[ $char_count -gt 4000 ]]; then
+    sed 's/,/\n\nDELETE /50; P; D' $delete_txt>$delete_txt-SPLIT.txt
+  fi
+done
+
 #count lines in outputs (line count = index count)
 count_1=`wc -l $all_empty|awk -F ' ' '{print $1}'`
 count_2=`wc -l $all_empty_user|awk -F ' ' '{print $1}'`
@@ -259,6 +268,7 @@ echo >>$summary
 
 echo "################ Empty Index Cleanup Summary [END] ################" >>$summary
 echo>>$summary
+
 
 #moving this
 #me=$(realpath $0)
