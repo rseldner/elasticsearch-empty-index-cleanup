@@ -5,11 +5,12 @@
 #These empty indices provide no benefit but still consume resources.
 
 # Current version
+# v1.5.2 20220812
+# fixed split into multiple DELETEs when > ~4kb
+
 # v1.5.1 20220731
 # added empty non-write datastream backing indices (#7), and searchable snapshots (#8,#9)
 # fixed "all empty user/custom (i.e. non system) indices"(#2) - added missing regex anchor
-
-# previous versions
 
 # v1.4.1 20220412
 # added shard counter and ilm polcy test scripts.  shard counter is hard coded to one file at the moment.
@@ -131,7 +132,9 @@ for delete_txt in $folder/*DELETE.txt
 do
   char_count=$(cat $delete_txt|wc -c)
   if [[ $char_count -gt 4000 ]]; then
-    sed 's/,/\n\nDELETE /50; P; D' $delete_txt>$delete_txt-SPLIT.txt
+    sed 's/,/\nDELETE /50; P; D' $delete_txt>$delete_txt-SPLIT.temp
+    sed 'G' $delete_txt-SPLIT.txt>$delete_txt
+    rm $delete_txt-SPLIT.temp
   fi
 done
 
