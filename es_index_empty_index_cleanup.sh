@@ -133,7 +133,7 @@ do
   char_count=$(cat $delete_txt|wc -c)
   if [[ $char_count -gt 4000 ]]; then
     sed 's/,/\nDELETE /50; P; D' $delete_txt>$delete_txt-SPLIT.temp
-    sed 'G' $delete_txt-SPLIT.txt>$delete_txt
+    sed 'G' $delete_txt-SPLIT.temp>$delete_txt
     rm $delete_txt-SPLIT.temp
   fi
 done

@@ -2,7 +2,14 @@
  tool to help identify empty indices that can be removed; particularly those that have resulted from [max_age ILM rollovers](https://www.elastic.co/guide/en/elasticsearch/reference/current/size-your-shards.html#delete-empty-indices).
  The tool will organize the empty indices into groups, and will provide a separate output for each subset.
 
-Currently creates separate outputs for:
+ # But why? Why not just delete all the empty things?
+ Main reasons I had in mind:
+ 1. Indices using ILM rollovers - Deleting the current write index breaks the rollover.  You will also encounter errors when you try to write to the alias.
+ 2. Datastreams - While you cannot delete the current write index of a data stream, attempting to do so will produce an error.  So you have to make sure a write index is not specified when deleting in bulk.  This makes deleting the datastrean backing indices a tedious process.
+ 3. Avoid accidental deletions.
+ 4. This is faster than scrolling through pages and pages of indices in Kibana
+
+This currently creates separate outputs for:
 1. ALL Empty Indices
 2. Empty User indices (aka indices that don't begin with "."; including datastreams)
 3. Empty ILM rollover indices
