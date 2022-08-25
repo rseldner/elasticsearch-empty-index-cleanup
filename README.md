@@ -6,7 +6,7 @@
  **Main reasons I had in mind:**
  1. Indices using ILM rollovers - Deleting the current write index breaks the rollover.  You will also encounter errors when you try to write to the alias.
  2. Datastreams - While you cannot delete the current write index of a data stream, attempting to do so will produce an error.  So you have to make sure a write index is not specified when deleting in bulk.  This makes deleting the datastrean backing indices a tedious process.
- 3. Avoid accidental deletions.
+ 3. Avoid accidental deletions.  Using index patterns to delete batches of indices is risky.  Also, a cluster might have [action-destructive-requires-name](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-management-settings.html#action-destructive-requires-name) enabled to begin with, preventing the use of wildcards.
  4. This is faster than scrolling through pages and pages of indices in Kibana
 
 ## This currently creates separate outputs for:
