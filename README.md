@@ -243,7 +243,7 @@ run the `es_index_empty_index_cleanup.sh` script in the main diagnostic folder (
 # Next steps:
 - [X] split into separate DELETEs every ~4000 characters (<4KB) - sometimes creates a DELETE with a single index.  not sure why, but not worth fixing since it still works
 - [X] identify and rule out current write index for data streams. Related https://github.com/elastic/elasticsearch/issues/86633
-  - account for datastreams that only have one backing index.  update logic to exclude these.
+  - [ ] account for datastreams that only have one backing index.  update logic to exclude these.
 - [X] generate a list of ILM policies that may need to have `max_age` removed/adjusted and a DELETE phase added
 - [X] produce a shard count for each grouping
   - came up with 3 possible count methods.  
