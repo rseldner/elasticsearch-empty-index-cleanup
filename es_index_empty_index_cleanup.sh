@@ -70,6 +70,20 @@ then
   exit 1
 fi
 
+#check and warn for files with circuit breaking exceptions.  Tool can potentially work to a degree
+if grep -q "circuit_breaking_exception" $index_stats || grep -q "circuit_breaking_exception" $index_aliases
+then
+  echo
+  echo "####################################################"
+  echo 
+  echo 🛑 circuit breaking exceptions found.  tool will still run but output will be incomplete.
+  echo
+  echo "####################################################"
+  echo
+fi
+
+
+
 #check and create output directory
 if [ ! -d $folder ]
 then

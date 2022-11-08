@@ -70,8 +70,9 @@ echo $pol_name $(grep -c $pol_name $empty_ilm_indices_policy_name) >>$empty_ilm_
 done
 cat $empty_ilm_indices_policy_name_unique_count|sort -k2 -n -r >>$empty_ilm_indices_policy_name_unique_count_sort
 
-echo "Consider adjusting the rollover max_age setting and/or the Delete phase min_age in the following ILM Policies:"
-
+echo "The following ILM policies are associated with empty indices."
+echo "Consider adjusting the rollover max_age setting and/or the Delete phase min_age"
+echo "For 8.4 and above, you can add min_docs setting.  See https://www.elastic.co/guide/en/elasticsearch/reference/8.4/ilm-rollover.html"
 # GET ILM POLICIES' rollover max_age and delete phase min_age
 filename=$empty_ilm_indices_policy_name_unique_count_sort
 ilm_policies=$(cut -f1 -d ' ' $filename)
