@@ -243,11 +243,14 @@ run the `es_index_empty_index_cleanup.sh` script in the main diagnostic folder (
 # Next steps:
 - [X] split into separate DELETEs every ~4000 characters (<4KB) - sometimes creates a DELETE with a single index.  not sure why, but not worth fixing since it still works
 - [X] identify and rule out current write index for data streams. Related https://github.com/elastic/elasticsearch/issues/86633
-  - [ ] account for datastreams that only have one backing index.  update logic to exclude these.
+  - [ ] account for datastreams that only have one backing index.  update logic to exclude these. This might already be fine, but need to specifically verify.
 - [X] generate a list of ILM policies that may need to have `max_age` removed/adjusted and a DELETE phase added
 - [X] produce a shard count for each grouping
   - came up with 3 possible count methods.  
   - [ ] decide on a method.  
 - [ ] validate ILM managed indices by checking actual ILM outputs rather than assuming based on an index name's numerical suffix.  though this might not be important.  Does it matter if an *empty* index is misinterpreted as being ILM managed?
 - [ ] switch to checking alias.json for write indices instead of _cat/aliases as cat APIs are not recommended for programatic parsing.  risk of breaking in the future. This might be slower.
+- [ ] Mention new preventative settings
+  - `min_*` settings for 8.4+ https://www.elastic.co/guide/en/elasticsearch/reference/8.4/indices-rollover-index.html
+  - `indices.lifecycle.rollover.only_if_has_documents` for 8.5+
 - [ ] Clean it all up
