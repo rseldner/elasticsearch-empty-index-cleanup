@@ -1,11 +1,12 @@
 # empty-index-cleanup
  tool to help identify empty indices that can be removed; particularly those that have resulted from [max_age ILM rollovers](https://www.elastic.co/guide/en/elasticsearch/reference/current/size-your-shards.html#delete-empty-indices).
  The tool will organize the empty indices into groups, and will provide a separate output for each subset.
+ This will also generate files containing the DELETE API calls for the different groupings.  I attempt to break the DELETEs into separate 4KB requests.
 
  ## But why? Why not just delete all the empty things?
  **Main reasons I had in mind:**
  1. Indices using ILM rollovers - Deleting the current write index breaks the rollover.  You will also encounter errors when you try to write to the alias.
- 2. Datastreams - While you cannot delete the current write index of a data stream, attempting to do so will produce an error.  So you have to make sure a write index is not specified when deleting in bulk.  This makes deleting the datastrean backing indices a tedious process.
+ 2. Datastreams - While you cannot delete the current write index of a data stream, attempting to do so will produce an error.  So you have to make sure a write index is not specified when deleting in bulk.  This makes deleting the datastream backing indices a tedious process.
  3. Avoid accidental deletions.  Using index patterns to delete batches of indices is risky.  Also, a cluster might have [action-destructive-requires-name](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-management-settings.html#action-destructive-requires-name) enabled to begin with, preventing the use of wildcards.
  4. This is faster than scrolling through pages and pages of indices in Kibana
 
@@ -233,15 +234,17 @@ apm-rollover-30-days
 ## Requirements:
 - macOS or linux
 - [jq](https://stedolan.github.io/jq/download/)
-- An elasticsearch support diagnostic or these files:
+- An elasticsearch support diagnostic or these individual files:
   - indices_stats.json (`GET */_stats?level=shards&pretty&human&expand_wildcards=all`)
   - cat/cat_aliases.txt (`GET _cat/aliases?v`)
-
+  - (optional)commercial/data_stream.json (`GET _data_stream?pretty&expand_wildcards=all`)
+  - (optional)commercial/ilm_policies.json (`GET /_ilm/policy?human&pretty`
 ## Usage:
-run the `es_index_empty_index_cleanup.sh` script in the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory)
+run the `es_index_empty_index_cleanup.sh` script in the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory and `data_stream.json` is in a `commercial` subdirectory)
 
 # Next steps:
-- [X] split into separate DELETEs every ~4000 characters (<4KB) - sometimes creates a DELETE with a single index.  not sure why, but not worth fixing since it still works
+- [X] split into separate DELETEs every ~4000 characters (<4KB) - sometimes creates a DELETE with a single index.  not sure why, but not worth fixing since it still works (fixed)
+  - Reasoning: `http.max_initial_line_length` - https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html
 - [X] identify and rule out current write index for data streams. Related https://github.com/elastic/elasticsearch/issues/86633
   - [ ] account for datastreams that only have one backing index.  update logic to exclude these. This might already be fine, but need to specifically verify.
 - [X] generate a list of ILM policies that may need to have `max_age` removed/adjusted and a DELETE phase added
