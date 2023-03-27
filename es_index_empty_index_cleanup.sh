@@ -4,35 +4,6 @@
 #If you’re using ILM and roll over indices based on a max_age threshold, you can inadvertently create indices with no documents.
 #These empty indices provide no benefit but still consume resources.
 
-# Current version
-# v1.5.2 20220812
-# fixed split into multiple DELETEs when > ~4kb
-
-# v1.5.1 20220731
-# added empty non-write datastream backing indices (#7), and searchable snapshots (#8,#9)
-# fixed "all empty user/custom (i.e. non system) indices"(#2) - added missing regex anchor
-
-# v1.4.1 20220412
-# added shard counter and ilm polcy test scripts.  shard counter is hard coded to one file at the moment.
-
-# v1.3.1 20220406
-# added check to exit if the source files don't exist or contain an error.
-# added commands for each type that will generate a file containing a DELETE for the respective indices
-# call shard counter (test)
-
-# v1.3.0 20220328
-# changed output filenemes to include numerical prefix for easier reference/identification
-# updated descriptions in summary
-
-# v1.2.0 20220308
-# added output for es_index_cleanup_all_empty_ilm_non_write
-
-# v1.1.0 20220228
-# misc jq and grep corrections
-
-# v1.0 202202??
-# created this mess
-
 # file references
   # data sources
 index_stats='indices_stats.json'
@@ -109,12 +80,12 @@ jq '[.indices | to_entries[]| select(.value.total.docs.count == 0)]|from_entries
 # 5 - get empty indices with ILM rollover naming scheme and are not the current write index
 grep -f $all_empty_ilm $index_aliases|grep false|awk -F ' ' '{print $2}'|sort > $all_empty_ilm_non_write
   #create a DELETE API request
-echo DELETE `grep -f $all_empty_ilm $index_aliases|grep false|awk -F ' ' '{print $2}'|sort| paste -s -d, -`>$all_empty_ilm_non_write-DELETE.txt
+echo DELETE "$(grep -f $all_empty_ilm $index_aliases|grep false|awk -F ' ' '{print $2}'|sort| paste -s -d, -)">$all_empty_ilm_non_write-DELETE.txt
 
 # 6 - get empty indices with ILM naming scheme and non system/hidden and are not the current write index
 grep -f $all_empty_ilm_non_sys $index_aliases|grep false|awk -F ' ' '{print $2}'|sort > $all_empty_ilm_non_sys_non_write
   #create a DELETE API request
-echo DELETE `grep -f $all_empty_ilm_non_sys $index_aliases|grep false|awk -F ' ' '{print $2}'|sort| paste -s -d, -`>$all_empty_ilm_non_sys_non_write-DELETE.txt
+echo DELETE "$(grep -f $all_empty_ilm_non_sys $index_aliases|grep false|awk -F ' ' '{print $2}'|sort| paste -s -d, -)">$all_empty_ilm_non_sys_non_write-DELETE.txt
 
 # 7 - get all empty datastream backing indices excluding the current write index
   #cat commercial/data_stream.json| jq '..|."indices"? | select(. != null)|[last]' |grep index_name|sed 's/"index_name": //g'|tr -d " ,\"">ds_current_write.temp
@@ -125,7 +96,7 @@ grep -E "^\.ds-.*-\d{6}" $all_empty_ilm > $all_empty_datastreams
   # remove current write indices from list of empty datastreams
 grep -v -x -f $all_current_write_datastreams $all_empty_datastreams>$all_empty_non_write_datastreams
   #create a DELETE API request
-echo DELETE `grep -v -x -f $all_current_write_datastreams $all_empty_datastreams|sort| paste -s -d, -`>$all_empty_non_write_datastreams-DELETE.txt
+echo DELETE "$(grep -v -x -f $all_current_write_datastreams $all_empty_datastreams|sort| paste -s -d, -)">$all_empty_non_write_datastreams-DELETE.txt
 
  # cleanup temp files
  rm $all_empty_datastreams
@@ -134,46 +105,47 @@ echo DELETE `grep -v -x -f $all_current_write_datastreams $all_empty_datastreams
 # 8 - get all empty frozen (partially mounted) searchable snapshot indices
 grep -E "^partial-.*" $all_empty > $all_empty_frozen_searchable_snapshots
   #create a DELETE API request
-echo DELETE `grep -E "^partial-.*" $all_empty |sort| paste -s -d, -`>$all_empty_frozen_searchable_snapshots-DELETE.txt
+echo DELETE "$(grep -E "^partial-.*" $all_empty |sort| paste -s -d, -)">$all_empty_frozen_searchable_snapshots-DELETE.txt
 
 # 9 - get all empty cold (fully mounted) searchable snapshot indices
 grep -E "^restored-.*" $all_empty > $all_empty_cold_searchable_snapshots
   #create a DELETE API request
-echo DELETE `grep -E "^restored-.*" $all_empty |sort| paste -s -d, -`>$all_empty_cold_searchable_snapshots-DELETE.txt
+echo DELETE "$(grep -E "^restored-.*" $all_empty |sort| paste -s -d, -)">$all_empty_cold_searchable_snapshots-DELETE.txt
 
 #split into multiple DELETEs if > ~4kb
-for delete_txt in $folder/*DELETE.txt
+for delete_txt in "$folder"/*DELETE.txt
 do
-  char_count=$(cat $delete_txt|wc -c)
+  char_count=$(wc -c<"$delete_txt")
   if [[ $char_count -gt 4000 ]]; then
-    sed 's/,/\nDELETE /50; P; D' $delete_txt>$delete_txt-SPLIT.temp
-    sed 'G' $delete_txt-SPLIT.temp>$delete_txt
-    rm $delete_txt-SPLIT.temp
+    sed 's/,/\nDELETE /50; P; D' "$delete_txt">"$delete_txt"-SPLIT.temp
+    sed 'G' "$delete_txt"-SPLIT.temp>"$delete_txt"
+    rm "$delete_txt"-SPLIT.temp
   fi
 done
 
 #count lines in outputs (line count = index count)
-count_1=`wc -l $all_empty|awk -F ' ' '{print $1}'`
-count_2=`wc -l $all_empty_user|awk -F ' ' '{print $1}'`
-count_3=`wc -l $all_empty_ilm|awk -F ' ' '{print $1}'`
-count_4=`wc -l $all_empty_ilm_non_sys|awk -F ' ' '{print $1}'`
-count_5=`wc -l $all_empty_ilm_non_write|awk -F ' ' '{print $1}'`
-count_6=`wc -l $all_empty_ilm_non_sys_non_write|awk -F ' ' '{print $1}'`
-count_7=`wc -l $all_empty_non_write_datastreams|awk -F ' ' '{print $1}'`
-count_8=`wc -l $all_empty_frozen_searchable_snapshots|awk -F ' ' '{print $1}'`
-count_9=`wc -l $all_empty_cold_searchable_snapshots|awk -F ' ' '{print $1}'`
+count_1=$(wc -l $all_empty|awk -F ' ' '{print $1}')
+count_2=$(wc -l $all_empty_user|awk -F ' ' '{print $1}')
+count_3=$(wc -l $all_empty_ilm|awk -F ' ' '{print $1}')
+count_4=$(wc -l $all_empty_ilm_non_sys|awk -F ' ' '{print $1}')
+count_5=$(wc -l $all_empty_ilm_non_write|awk -F ' ' '{print $1}')
+count_6=$(wc -l $all_empty_ilm_non_sys_non_write|awk -F ' ' '{print $1}')
+count_7=$(wc -l $all_empty_non_write_datastreams|awk -F ' ' '{print $1}')
+count_8=$(wc -l $all_empty_frozen_searchable_snapshots|awk -F ' ' '{print $1}')
+count_9=$(wc -l $all_empty_cold_searchable_snapshots|awk -F ' ' '{print $1}')
 
 #write count per group to temp file
 echo "$count_1 Total empty indices(1)">$count_temp
-echo "$count_2 Empty non-system indices (2)" >>$count_temp
-echo "$count_3 Empty ILM rollover indices (3)" >>$count_temp
-echo "$count_4 Empty non-system ILM rollover indices(4)" >>$count_temp
-echo "$count_5 * Empty non-write ILM rollover indices(5)" >>$count_temp
-echo "$count_6 * Empty non-system AND non-write ILM rollover indices(6)">>$count_temp
-echo "$count_7 * Empty non-write datastream backing indices(7)">>$count_temp
-echo "$count_8 * Empty frozen searchable snapshot indices(8)">>$count_temp
-echo "$count_9 * Empty cold searchable snapshot indices(9)">>$count_temp
-
+{
+echo "$count_2 Empty non-system indices (2)"
+echo "$count_3 Empty ILM rollover indices (3)"
+echo "$count_4 Empty non-system ILM rollover indices(4)"
+echo "$count_5 * Empty non-write ILM rollover indices(5)"
+echo "$count_6 * Empty non-system AND non-write ILM rollover indices(6)"
+echo "$count_7 * Empty non-write datastream backing indices(7)"
+echo "$count_8 * Empty frozen searchable snapshot indices(8)"
+echo "$count_9 * Empty cold searchable snapshot indices(9)"
+}>>$count_temp
 # Terminal output
 echo
 echo "################ Empty Index Cleanup Summary [START] ################"
@@ -190,106 +162,101 @@ echo "################ Empty Index Cleanup Summary [END] ################"
 echo
 rm $count_temp
 
-#Summary file output
+#Summary file output.  Should probably move this out of the script...
+
 echo "################ Empty Index Cleanup Summary [START] ################" >$summary
-echo >>$summary
-echo "Use this to identify and quickly remove empty indices." >>$summary
-echo >>$summary
-echo "Particularly created this for when a large amount of indices are inadvertently created due to ILM max_age rollovers" >>$summary
-echo "https://www.elastic.co/guide/en/elasticsearch/reference/current/size-your-shards.html#delete-empty-indices" >>$summary
-echo >>$summary
-echo "⭐ My goto output is the Empty non-write ILM rollover indices file: ⭐ 5-es_index_cleanup_all_empty_ilm_non_write.txt ⭐" >>$summary
-echo >>$summary
-echo "-----------------------------#1---------------------------------" >>$summary
-echo >>$summary
-echo "$count_1 Total empty indices">>$summary
-echo "🛑 Notes:  Recommended for general reference purposes." >>$summary
-echo "File (list): $all_empty" >>$summary
-echo >>$summary
-echo "Terminal Command to generate a DELETE file (copy/paste to run):" >>$summary
-echo >>$summary
-echo "echo DELETE \$(cat $all_empty| paste -s -d, -) > $all_empty-DELETE.txt" >>$summary
-echo >>$summary
-echo "-----------------------------#2---------------------------------" >>$summary
-echo >>$summary
-echo "$count_2 Empty User indices" >>$summary
-echo "🟡 Notes: User/Custom Indices.  Excludes indices beggining with a \".\"" >>$summary
-echo "File (list): $all_empty_user" >>$summary
-echo "Terminal Command to generate a DELETE file (copy/paste to run):" >>$summary
-echo >>$summary
-echo "echo DELETE \$(cat $all_empty_user| paste -s -d, -) > $all_empty_user-DELETE.txt" >>$summary
-echo >>$summary
-echo "-----------------------------#3---------------------------------" >>$summary
-echo >>$summary
-echo "$count_3 Empty ILM rollover indices" >>$summary
-echo "🟡 Notes: ❕Caution - This includes system and current write indices" >>$summary
-echo "File (list): $all_empty_ilm" >>$summary
-echo "Terminal Command to generate a DELETE file (copy/paste to run):" >>$summary
-echo >>$summary
-echo "echo DELETE \$(cat $all_empty_ilm| paste -s -d, -) > $all_empty_ilm-DELETE.txt" >>$summary
-echo >>$summary
-echo "-----------------------------#4---------------------------------" >>$summary
-echo >>$summary
-echo "$count_4 Empty non-system ILM rollover indices" >>$summary
-echo "🟡 Notes: ❕Caution - This includes the current write indices.">>$summary
-echo "File (list): $all_empty_ilm_non_sys" >>$summary
-echo "Terminal Command to generate a DELETE file (copy/paste to run):" >>$summary
-echo >>$summary
-echo "echo DELETE \$(cat $all_empty_ilm_non_sys| paste -s -d, -) > $all_empty_ilm_non_sys-DELETE.txt" >>$summary
-echo >>$summary
-echo "-----------------------------#5---------------------------------" >>$summary
-echo >>$summary
-echo "$count_5 Empty non-write ILM rollover indices" >>$summary
-echo "🟢 Notes: Subset of #3.  Safer but note that it includes system/hidden indices (there *may* be a situation where a need a super \"duper\" user is needed 8.x.  Have not run into this yet though.)">>$summary
-echo "File (list): $all_empty_ilm_non_write" >>$summary
-echo  >>$summary
-echo File containing DELETE was automatically created by script: >>$summary
-echo -e '\t'less $all_empty_ilm_non_write-DELETE.txt >>$summary
-echo >>$summary
-echo "-----------------------------#6---------------------------------" >>$summary
-echo >>$summary
-echo "$count_6 Empty non-system AND non-write ILM rollover indices">>$summary
-echo "🟢 Notes: Subset of #4. Safest to remove" >>$summary
-echo "File (list): $all_empty_ilm_non_sys_non_write" >>$summary
-echo  >>$summary
-echo File containing DELETE was automatically created by script: >>$summary
-echo -e '\t'less $all_empty_ilm_non_sys_non_write-DELETE.txt >>$summary
-echo >>$summary
-echo "-----------------------------#7---------------------------------" >>$summary
-echo >>$summary
-echo "$count_7 Empty non-write datastream backing indices">>$summary
-echo "🟢 Notes: Subset of #3. Safe to remove" >>$summary
-echo "File (list): $all_empty_non_write_datastreams" >>$summary
-echo  >>$summary
-echo File containing DELETE was automatically created by script: >>$summary
-echo -e '\t'less $all_empty_non_write_datastreams-DELETE.txt >>$summary
-echo >>$summary
-echo "-----------------------------#8---------------------------------" >>$summary
-echo >>$summary
-echo "$count_8 Empty frozen searchable snapshot indices">>$summary
-echo "🟢 Notes: Subset of #1. Presumed safe as they would not be write indices and are in a snapshot" >>$summary
-echo "File (list): $all_empty_frozen_searchable_snapshots" >>$summary
-echo  >>$summary
-echo File containing DELETE was automatically created by script: >>$summary
-echo -e '\t'less $all_empty_frozen_searchable_snapshots-DELETE.txt >>$summary
-echo >>$summary
-echo "-----------------------------#9---------------------------------" >>$summary
-echo >>$summary
-echo "$count_9 Empty cold searchable snapshot indices">>$summary
-echo "🟢 Notes: Subset of #1. Presumed safe as they would not be write indices and are in a snapshot" >>$summary
-echo "File (list): $all_empty_cold_searchable_snapshots" >>$summary
-echo  >>$summary
-echo File containing DELETE was automatically created by script: >>$summary
-echo -e '\t'less $all_empty_cold_searchable_snapshots-DELETE.txt >>$summary
-echo >>$summary
+{
+echo 
+echo "Use this to identify and quickly remove empty indices." 
+echo 
+echo "Particularly created this for when a large amount of indices are inadvertently created due to ILM max_age rollovers" 
+echo "https://www.elastic.co/guide/en/elasticsearch/reference/current/size-your-shards.html#delete-empty-indices" 
+echo 
+echo "⭐ My goto output is the Empty non-write ILM rollover indices file: ⭐ 5-es_index_cleanup_all_empty_ilm_non_write.txt ⭐" 
+echo 
+echo "-----------------------------#1---------------------------------" 
+echo 
+echo "$count_1 Total empty indices"
+echo "🛑 Notes:  Recommended for general reference purposes." 
+echo "File (list): $all_empty" 
+echo 
+echo "Terminal Command to generate a DELETE file (copy/paste to run):" 
+echo 
+echo "echo DELETE \$(cat $all_empty| paste -s -d, -) > $all_empty-DELETE.txt" 
+echo 
+echo "-----------------------------#2---------------------------------" 
+echo 
+echo "$count_2 Empty User indices" 
+echo "🟡 Notes: User/Custom Indices.  Excludes indices beggining with a \".\"" 
+echo "File (list): $all_empty_user" 
+echo "Terminal Command to generate a DELETE file (copy/paste to run):" 
+echo 
+echo "echo DELETE \$(cat $all_empty_user| paste -s -d, -) > $all_empty_user-DELETE.txt" 
+echo 
+echo "-----------------------------#3---------------------------------" 
+echo 
+echo "$count_3 Empty ILM rollover indices" 
+echo "🟡 Notes: ❕Caution - This includes system and current write indices" 
+echo "File (list): $all_empty_ilm" 
+echo "Terminal Command to generate a DELETE file (copy/paste to run):" 
+echo 
+echo "echo DELETE \$(cat $all_empty_ilm| paste -s -d, -) > $all_empty_ilm-DELETE.txt" 
+echo 
+echo "-----------------------------#4---------------------------------" 
+echo 
+echo "$count_4 Empty non-system ILM rollover indices" 
+echo "🟡 Notes: ❕Caution - This includes the current write indices."
+echo "File (list): $all_empty_ilm_non_sys" 
+echo "Terminal Command to generate a DELETE file (copy/paste to run):" 
+echo 
+echo "echo DELETE \$(cat $all_empty_ilm_non_sys| paste -s -d, -) > $all_empty_ilm_non_sys-DELETE.txt" 
+echo 
+echo "-----------------------------#5---------------------------------" 
+echo 
+echo "$count_5 Empty non-write ILM rollover indices" 
+echo "🟢 Notes: Subset of #3.  Safer but note that it includes system/hidden indices (there *may* be a situation where a need a super \"duper\" user is needed 8.x.  Have not run into this yet though.)"
+echo "File (list): $all_empty_ilm_non_write" 
+echo  
+echo File containing DELETE was automatically created by script: 
+echo -e '\t'less $all_empty_ilm_non_write-DELETE.txt 
+echo 
+echo "-----------------------------#6---------------------------------" 
+echo 
+echo "$count_6 Empty non-system AND non-write ILM rollover indices"
+echo "🟢 Notes: Subset of #4. Safest to remove" 
+echo "File (list): $all_empty_ilm_non_sys_non_write" 
+echo  
+echo File containing DELETE was automatically created by script: 
+echo -e '\t'less $all_empty_ilm_non_sys_non_write-DELETE.txt 
+echo 
+echo "-----------------------------#7---------------------------------" 
+echo 
+echo "$count_7 Empty non-write datastream backing indices"
+echo "🟢 Notes: Subset of #3. Safe to remove" 
+echo "File (list): $all_empty_non_write_datastreams" 
+echo  
+echo File containing DELETE was automatically created by script: 
+echo -e '\t'less $all_empty_non_write_datastreams-DELETE.txt 
+echo 
+echo "-----------------------------#8---------------------------------" 
+echo 
+echo "$count_8 Empty frozen searchable snapshot indices"
+echo "🟢 Notes: Subset of #1. Presumed safe as they would not be write indices and are in a snapshot" 
+echo "File (list): $all_empty_frozen_searchable_snapshots" 
+echo  
+echo File containing DELETE was automatically created by script: 
+echo -e '\t'less $all_empty_frozen_searchable_snapshots-DELETE.txt 
+echo 
+echo "-----------------------------#9---------------------------------" 
+echo 
+echo "$count_9 Empty cold searchable snapshot indices"
+echo "🟢 Notes: Subset of #1. Presumed safe as they would not be write indices and are in a snapshot" 
+echo "File (list): $all_empty_cold_searchable_snapshots" 
+echo  
+echo File containing DELETE was automatically created by script: 
+echo -e '\t'less $all_empty_cold_searchable_snapshots-DELETE.txt 
+echo 
 
-echo "################ Empty Index Cleanup Summary [END] ################" >>$summary
-echo>>$summary
-
-
-#moving this
-#me=$(realpath $0)
-#my_path=$(dirname $me)
-#$my_path/es_index_empty_index_cleanup_shard_counter.sh
-#echo
-#$my_path/es_index_empty_index_cleanup_ILM_policies.sh
+echo "################ Empty Index Cleanup Summary [END] ################" 
+echo
+}>>$summary
