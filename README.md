@@ -194,18 +194,17 @@ DELETE .kibana-event-log-7.16.0-000005,.kibana-event-log-7.16.0-000006,.kibana-e
 ```
 ##### 💰 Total Shards Savings (cluster wide) [START] 💰 #####
 
-1 - Shard count Method 1 (total_count in indices_stats.json) - This is the most accurate.  Might take between a few seconds to several minutes depending on the amount of empty indices found.  This will count total assigned shards. Unfortunately, this is not included in some cluster/diag versions, so it might be skipped
-182
-
-#########
-
-2 - Shard count Method 2 (looks at P & R columns cat_indices) - This will count total configured shards; so unassigned shards will be included in the count
-182
-
-#########
-
-3 - Used shard count Method 3 (count of index name in shards.json - 1 instance = 1 shard). This will count total configured shards; so unassigned shards will be included in the count
-182
+Shards | Group Filename
+-------|---------------
+2154     1-es_index_cleanup_all_empty.txt
+2064     2-es_index_cleanup_all_empty_user.txt
+2126     3-es_index_cleanup_all_empty_ilm.txt
+2060     4-es_index_cleanup_all_empty_ilm_non_sys.txt
+1986     5-es_index_cleanup_all_empty_ilm_non_write.txt
+1932     6-es_index_cleanup_all_empty_ilm_non_sys_non_write.txt
+0    7-es_index_cleanup_all_empty_non_write_datastreams.txt
+6    8-all_empty_frozen_searchable_snapshots.txt
+0    9-all_empty_cold_searchable_snapshots.txt
 
 ###### 💰 Total Shards Savings (cluster wide) [END] 💰 ######
 
@@ -213,20 +212,27 @@ DELETE .kibana-event-log-7.16.0-000005,.kibana-event-log-7.16.0-000006,.kibana-e
 
 ################# ILM POLICY REVIEW [START] #################
 
-Consider adjusting the rollover max_age or Delete phase min_age in the following ILM Policies
+The following ILM policies are associated with empty indices.
+Consider adjusting the rollover max_age setting and/or the Delete phase min_age
+In Elasticsearch 8.4 and above, you can add min_* settings
+   Doc: https://www.elastic.co/guide/en/elasticsearch/reference/8.4/ilm-rollover.html
+In Elasticsearch 8.5 and above, there is an indices.lifecycle.rollover.only_if_has_documents cluster level setting
+   Doc: https://www.elastic.co/guide/en/elasticsearch/reference/8.5/ilm-settings.html
 
-.siem-signals-default
-(1 empty rollover indices found)
-	 Rollover max_age: 	 30d
-	 Delete min_age: 	
-
-
-apm-rollover-30-days
-(110 empty rollover indices found)
-	 Rollover max_age: 	 30d
-	 Delete min_age: 	
-
-################# ILM POLICY REVIEW [END] #################
+Policy                             empty count  rollover max_age  delete in_age
+stage                              515          1d                13d
+dev                                505          1d                8d
+.siem-signals-default              12           30d
+.siem-signals-outside-development  11           30d
+apm-rollover-30-days               10           2d                2d
+metricbeat                         8            30d
+slm-history-ilm-policy             4            30d               90d
+ilm-history-ilm-policy             4            30d               90d
+.siem-signals-admins               4            30d
+prod                               1
+filebeat                           1            15d               7d
+.lists-default                     1
+.items-default                     1
 ```
 	
 </details>
@@ -243,17 +249,19 @@ apm-rollover-30-days
 run the `es_index_empty_index_cleanup.sh` script in the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory and `data_stream.json` is in a `commercial` subdirectory)
 
 # Next steps:
-- [X] split into separate DELETEs every ~4000 characters (<4KB) - sometimes creates a DELETE with a single index.  not sure why, but not worth fixing since it still works (fixed)
+- [ ] split into separate <4KB DELETEs.  Done but can be improved with some creative math.
   - Reasoning: `http.max_initial_line_length` - https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html
+  - [X] assuming index names < 100 chars for now
 - [X] identify and rule out current write index for data streams. Related https://github.com/elastic/elasticsearch/issues/86633
   - [ ] account for datastreams that only have one backing index.  update logic to exclude these. This might already be fine, but need to specifically verify.
 - [X] generate a list of ILM policies that may need to have `max_age` removed/adjusted and a DELETE phase added
 - [X] produce a shard count for each grouping
   - came up with 3 possible count methods.  
-  - [ ] decide on a method.  
+  - [X] decide on a method.  cat indices seems good enough.
 - [ ] validate ILM managed indices by checking actual ILM outputs rather than assuming based on an index name's numerical suffix.  though this might not be important.  Does it matter if an *empty* index is misinterpreted as being ILM managed?
 - [ ] switch to checking alias.json for write indices instead of _cat/aliases as cat APIs are not recommended for programatic parsing.  risk of breaking in the future. This might be slower.
-- [ ] Mention new preventative settings
+- [X] Mention new preventative settings
   - `min_*` settings for 8.4+ https://www.elastic.co/guide/en/elasticsearch/reference/8.4/indices-rollover-index.html
   - `indices.lifecycle.rollover.only_if_has_documents` for 8.5+
+- [ ] simulated `_cat/allocation`.  Not sure if worth the effort.
 - [ ] Clean it all up

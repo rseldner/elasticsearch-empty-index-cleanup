@@ -164,15 +164,15 @@ count_8=`wc -l $all_empty_frozen_searchable_snapshots|awk -F ' ' '{print $1}'`
 count_9=`wc -l $all_empty_cold_searchable_snapshots|awk -F ' ' '{print $1}'`
 
 #write count per group to temp file
-echo "$count_1 Total empty indices">$count_temp
-echo "$count_2 Empty User indices (non dot prefixed)" >>$count_temp
-echo "$count_3 Empty ILM rollover indices" >>$count_temp
-echo "$count_4 Empty non-system ILM rollover indices" >>$count_temp
-echo "$count_5 * Empty non-write ILM rollover indices" >>$count_temp
-echo "$count_6 * Empty non-system AND non-write ILM rollover indices">>$count_temp
-echo "$count_7 * Empty non-write datastream backing indices">>$count_temp
-echo "$count_8 * Empty frozen searchable snapshot indices">>$count_temp
-echo "$count_9 * Empty cold searchable snapshot indices">>$count_temp
+echo "$count_1 Total empty indices(1)">$count_temp
+echo "$count_2 Empty non-system indices (2)" >>$count_temp
+echo "$count_3 Empty ILM rollover indices (3)" >>$count_temp
+echo "$count_4 Empty non-system ILM rollover indices(4)" >>$count_temp
+echo "$count_5 * Empty non-write ILM rollover indices(5)" >>$count_temp
+echo "$count_6 * Empty non-system AND non-write ILM rollover indices(6)">>$count_temp
+echo "$count_7 * Empty non-write datastream backing indices(7)">>$count_temp
+echo "$count_8 * Empty frozen searchable snapshot indices(8)">>$count_temp
+echo "$count_9 * Empty cold searchable snapshot indices(9)">>$count_temp
 
 # Terminal output
 echo

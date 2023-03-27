@@ -3,15 +3,18 @@
 # It works, but not a fan of the output format. Would be better to see in a table format.
 #
 #file references. Some are superflous and will need to cleanup later.  I was lazy and copy/pasted from original empty index cleanup script
-index_stats='indices_stats.json'
+###index_stats='indices_stats.json'
 folder='es_empty_index_cleanup'
-all_empty="$folder/1-es_index_cleanup_all_empty.txt"
-all_empty_user="$folder/2-es_index_cleanup_all_empty_user.txt"
+###all_empty="$folder/1-es_index_cleanup_all_empty.txt"
+###all_empty_user="$folder/2-es_index_cleanup_all_empty_user.txt"
 all_empty_ilm="$folder/3-es_index_cleanup_all_empty_ilm.txt"
-all_empty_ilm_non_sys="$folder/4-es_index_cleanup_all_empty_ilm_non_sys.txt"
-all_empty_ilm_non_write="$folder/5-es_index_cleanup_all_empty_ilm_non_write.txt"
-all_empty_ilm_non_sys_non_write="$folder/6-es_index_cleanup_all_empty_ilm_non_sys_non_write.txt"
-summary="$folder/0-es_index_cleanup_summary.txt"
+###all_empty_ilm_non_sys="$folder/4-es_index_cleanup_all_empty_ilm_non_sys.txt"
+###all_empty_ilm_non_write="$folder/5-es_index_cleanup_all_empty_ilm_non_write.txt"
+###all_empty_ilm_non_sys_non_write="$folder/6-es_index_cleanup_all_empty_ilm_non_sys_non_write.txt"
+###summary="$folder/0-es_index_cleanup_summary.txt"
+
+policies_csv=$folder/es_empty_ilm_indices_policies.csv
+
 #can probably hard code "commercial" dir instead of using find
 ilm_explain_json=$(find . -name "ilm_explain.json")
 ilm_policies_json=$(find . -name "ilm_policies.json")
@@ -52,6 +55,13 @@ if [ -f $empty_ilm_indices_policy_name ]
   rm ilm_pol*.temp
 fi
 
+if [ -f $policies_csv ]
+  then
+  rm $policies_csv
+fi
+
+
+
 #get ILM policy for each empty index
 file_indices=$(cat $filename)
 for index_name in $file_indices
@@ -77,19 +87,31 @@ echo "In Elasticsearch 8.4 and above, you can add min_* settings"
 echo "   Doc: https://www.elastic.co/guide/en/elasticsearch/reference/8.4/ilm-rollover.html"
 echo "In Elasticsearch 8.5 and above, there is an indices.lifecycle.rollover.only_if_has_documents cluster level setting"
 echo "   Doc: https://www.elastic.co/guide/en/elasticsearch/reference/8.5/ilm-settings.html"
-# GET ILM POLICIES' rollover max_age and delete phase min_age
+echo
+echo -e "Policy,empty count,rollover max_age,delete in_age">$policies_csv
+
+# GET ILM POLICIES' empty indices count,rollover max_age, and delete phase min_age and output to csv
 filename=$empty_ilm_indices_policy_name_unique_count_sort
 ilm_policies=$(cut -f1 -d ' ' $filename)
 for pol_name in $ilm_policies
   do
-echo
-echo $pol_name
-echo -e \($(grep $pol_name $filename| cut -f2 -d ' ') empty rollover indices found\)
-#$(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age,.\"$pol_name\".policy.phases.delete.min_age]| @tsv" commercial/ilm_policies.json |tr -d '[] "')
-echo -e '\t' Rollover max_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age]| @tsv" $ilm_policies_json |tr -d '[] "')
-echo -e '\t' Delete min_age: '\t' $(jq -r "[.\"$pol_name\".policy.phases.delete.min_age]| @tsv" $ilm_policies_json |tr -d '[] "')
-echo
+empty_count=$(grep -e ^"$pol_name " $filename| cut -f2 -d ' ')
+rollover_max_age=$(jq -r "[.\"$pol_name\".policy.phases.hot.actions.rollover.max_age]| @tsv" $ilm_policies_json |tr -d '[] "')
+delete_min_age=$(jq -r "[.\"$pol_name\".policy.phases.delete.min_age]| @tsv" $ilm_policies_json |tr -d '[] "')
+
+#set value to "unset" if either setting is unconfigured. "column -s, -t" output will be incorrect with empty values
+if [ -z $rollover_max_age ]; then
+  rollover_max_age="unset"
+fi
+if [ -z $delete_min_age ]; then
+  delete_min_age="unset"
+fi
+#output to a CSV file
+echo -e "$pol_name,$empty_count,$rollover_max_age,$delete_min_age">>$policies_csv
+
 done
+
+column -s, -t < $policies_csv
 echo
 echo "################# ILM POLICY REVIEW [END] #################"
 echo

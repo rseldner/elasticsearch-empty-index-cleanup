@@ -21,6 +21,8 @@ all_empty_non_write_datastreams="$folder/7-es_index_cleanup_all_empty_non_write_
 all_empty_frozen_searchable_snapshots="$folder/8-all_empty_frozen_searchable_snapshots.txt"
 all_empty_cold_searchable_snapshots="$folder/9-all_empty_cold_searchable_snapshots.txt"
 
+myarray=( "$all_empty" "$all_empty_user" "$all_empty_ilm" "$all_empty_ilm_non_sys" "$all_empty_ilm_non_write" "$all_empty_ilm_non_sys_non_write" "$all_empty_non_write_datastreams" "$all_empty_frozen_searchable_snapshots" "$all_empty_cold_searchable_snapshots")
+
 #check es_empty_index_cleanup folder already exists (i.e. es_index_empty+index_cleanup.sh has been run)
 if [ ! -d $folder ]
 then
@@ -46,6 +48,46 @@ fi
 echo
 echo "##### 💰 Total Shards Savings (cluster wide) [START] 💰 #####"
 echo
+
+### ARRAY TEST START
+
+
+
+
+  echo "0 - Shard count Method 2 (looks at P & R columns cat_indices) - This will count total configured shards; so unassigned shards will be included in the count"
+  #filename=$all_empty_ilm_non_sys_non_write
+  for group in ${myarray[@]}
+  do
+    start_time=$SECONDS
+    echo $group
+    grep -F -f $group cat/cat_indices.txt | awk -F ' ' '{print $5,$6}'>>shard_count.temp
+    awk '{a=$1} {b=$2} {print a+(a*b)}' shard_count.temp|awk '{s+=$1} END {print s}'
+    rm shard_count.temp
+    elapsed=$(( SECONDS - start_time ))
+    echo $elapsed
+  done
+  
+
+for group in ${myarray[@]}
+  do
+  filename=$group
+  file_indices=$(cat $filename)
+  echo $group
+  start_time=$SECONDS
+  for index_name in $file_indices
+    do
+    grep -F $index_name cat/cat_indices.txt | awk -F ' ' '{print $5,$6}'>>shard_count.temp
+  done
+  awk '{a=$1} {b=$2} {print a+(a*b)}' shard_count.temp|awk '{s+=$1} END {print s}'
+  rm shard_count.temp
+  elapsed=$(( SECONDS - start_time ))
+done
+    rm shard_count.temp
+    
+  #clean up temp file
+  rm shard_count.temp
+  echo
+### ARRAY TEST END
 
 #if grep -q "shard_stats" $index_stats
 #then
