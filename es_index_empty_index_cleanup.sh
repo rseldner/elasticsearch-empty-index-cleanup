@@ -150,7 +150,7 @@ echo "$count_9 * Empty cold searchable snapshot indices(9)"
 echo
 echo "################ Empty Index Cleanup Summary [START] ################"
 echo
-cat $count_temp |sort -nr| grep --color=always -E '^\d+'
+cat $count_temp
 echo
 echo "* = safest to remove (exclude write indices)"
 echo
