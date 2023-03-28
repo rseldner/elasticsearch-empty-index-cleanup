@@ -290,7 +290,7 @@ DELETE .kibana-event-log-7.16.0-000005,.kibana-event-log-7.16.0-000006,.kibana-e
   - Reasoning: `http.max_initial_line_length` - https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html
   - [X] assuming index names < 100 chars for now
 - [X] identify and rule out current write index for data streams. Related https://github.com/elastic/elasticsearch/issues/86633
-  - [ ] account for datastreams that only have one backing index.  update logic to exclude these. This might already be fine, but need to specifically verify.
+  - [X] account for datastreams that only have one backing index.  update logic to exclude these. This might already be fine, but need to specifically verify.
 - [X] generate a list of ILM policies that may need to have `max_age` removed/adjusted and a DELETE phase added
 - [X] produce a shard count for each grouping
   - came up with 3 possible count methods.  
