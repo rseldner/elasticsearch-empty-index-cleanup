@@ -1,7 +1,22 @@
+> ⚠️ **Deprecated**: Consider this project dereprecated as it is not of much use for more recent Elasticsearch releases, particularly after 8.4.
+>
+>Why?
+>- 8.2 - there was a MAJOR optimization in memory overhead per segment making empty indices much less problematic
+>- 8.4 - `min_*` settings were introduced that would prevent rolling over on empty indices: https://www.elastic.co/guide/en/elasticsearch/reference/8.4/indices-rollover-index.html
+>- 8.5 - cluster-wide setting was introduced to only allow rollovers if there are documents: https://www.elastic.co/guide/en/elasticsearch/reference/8.5/ilm-settings.html#_cluster_level_settings_2
+>- 8.7 - GA release of TSDS which could technically have multiple write indices.  The datastream write index check in this script is not valid for TSDS.  https://www.elastic.co/guide/en/elasticsearch/reference/8.7/tsds.html
+>- 8.13 - GA release of Data Stream Lifecycle.  I don't even care to check how to handle these though probably a moot point given the 8.4 and 8.5 changes: https://www.elastic.co/guide/en/elasticsearch/reference/8.13/data-stream-lifecycle.html
+>
+>Sharing this as there could be situations where this could be used, but I am no longer testing this.
+>
+> ⚠️Use at your own risk.⚠️
+
 # empty-index-cleanup
  tool to help identify empty indices that can be removed; particularly those that have resulted from [max_age ILM rollovers](https://www.elastic.co/guide/en/elasticsearch/reference/current/size-your-shards.html#delete-empty-indices).
  The tool will organize the empty indices into groups, and will provide a separate output for each subset.
  This will also generate files containing the DELETE API calls for the different groupings.  I attempt to break the DELETEs into separate 4KB requests.
+ The API calls are written for Kibana Dev Tools Console.
+ This all started with a series of oneliners that I put together into a script over time. (so it's messy, but it works).
 
  ## But why? Why not just delete all the empty things?
  **Main reasons I had in mind:**
@@ -22,20 +37,35 @@
 9. Empty cold searchable snapshot indices
 
 As a safety precaution, a DELETE will be automatically created for **only** 5 through 9.  You probably don't want to delete current write indices.
-Though a command to generate DELETEs for 1-4 IS provided in the summary file if you wish to run that separately. 
+Though a command to generate DELETEs for 1-4 IS provided in the summary file if you wish to run that separately - though **I would not suggest it**.
 
+⚠️ Note, deleting empty searchable snapshot indices does not remove the searchable snapshot
 
 ## Requirements:
 - macOS or linux
 - [jq](https://stedolan.github.io/jq/download/)
-- An elasticsearch support diagnostic or these individual files:
+- An elasticsearch support diagnostic [link](https://github.com/elastic/support-diagnostics/) or manually create these individual files using the provided APIs:
   - indices_stats.json (`GET */_stats?level=shards&pretty&human&expand_wildcards=all`)
   - cat/cat_aliases.txt (`GET _cat/aliases?v`)
   - (optional)commercial/data_stream.json (`GET _data_stream?pretty&expand_wildcards=all`)
   - (optional)commercial/ilm_policies.json (`GET /_ilm/policy?human&pretty`
+ 
+Example of expected directory structure:
+```
+$ tree
+.
+├── cat
+│   └── cat_aliases.txt
+├── commercial
+│   ├── data_stream.json
+│   └── ilm_policies.json
+├── es_index_empty_index_cleanup_1.sh
+└── indices_stats.json
+```
 
 ## Usage:
-run the `es_index_empty_index_cleanup_1.sh` script from the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory and `data_stream.json` is in a `commercial` subdirectory)
+Run the `es_index_empty_index_cleanup_1.sh` script from the main diagnostic folder (or same directory as `indices_stats.json` where `cat_aliases.txt` in a`cat` subdirectory and `data_stream.json`+`ilm_policies.json` are in a `commercial` subdirectory)
+
 
 ```
 $ pwd
@@ -285,8 +315,9 @@ DELETE .kibana-event-log-7.16.0-000005,.kibana-event-log-7.16.0-000006,.kibana-e
 
 </details>
 
-# Next steps:
-- [ ] split into separate <4KB DELETEs.  Done but can be improved with some creative math.
+
+~~# Next steps:~~ No Next Steps.  🪦
+- [X]] split into separate <4KB DELETEs.  Done but can be improved with some creative math.
   - Reasoning: `http.max_initial_line_length` - https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html
   - [X] assuming index names < 100 chars for now
 - [X] identify and rule out current write index for data streams. Related https://github.com/elastic/elasticsearch/issues/86633
